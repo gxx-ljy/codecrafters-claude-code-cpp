@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
             }
             else if (tc["function"]["name"].get<std::string>() == "Bash") {
                 std::string command = args["command"].get<std::string>();
-                std::string result = execute_bash(command);
+                std::string result = execute_command(command);
                 messages.push_back({
                     {"role", "tool"},
                     {"tool_call_id", tc["id"]},
