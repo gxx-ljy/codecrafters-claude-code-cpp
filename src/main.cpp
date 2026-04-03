@@ -5,7 +5,19 @@
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
+#include <fstream>
+#include <streambuf>
+
 using json = nlohmann::json;
+
+std::string read_file(const std::string& file_path) {
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + file_path);
+    }
+    return std::string((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+}
 
 int main(int argc, char* argv[]) {
     if (argc < 3 || std::string(argv[1]) != "-p") {
@@ -85,8 +97,19 @@ int main(int argc, char* argv[]) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     std::cerr << "Logs from your program will appear here!" << std::endl;
 
-    // TODO: Uncomment the line below to pass the first stage
-    std::cout << result["choices"][0]["message"]["content"].get<std::string>();
+    json tool_calls = result["choices"][0]["message"]["tool_calls"];
+    if (!tool_calls.empty() && !tool_calls.isnull()) {
+        for (const auto& tc : tool_calls) {
+            json args = tc["function"]["arguments"];
+            if (tc["function"]["name"] == "Read") {
+                std::string file_path = args["file_path"].get<std::string>();
+                std::string content = read_file(file_path);
+                std::cout << content << std::endl;
+            }
+        }
+    } else {
+        std::cout << result["choices"][0]["message"]["content"].get<std::string>();
+    }
 
     return 0;
 }
