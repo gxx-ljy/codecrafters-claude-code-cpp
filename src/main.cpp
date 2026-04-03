@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
                 "description", "Write content to a file",
                 "parameters", {
                 "type", "object",
-                "required", ["file_path", "content"],
+                "required", json::array({"file_path","content"}),
                 "properties", {
                     "file_path", {
                         "type", "string",
