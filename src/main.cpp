@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
         {{"role", "user"}, {"content", prompt}},
     });
 
-    while (True) {
+    while (true) {
         json request_body = {
             {"model", "anthropic/claude-haiku-4.5"},
             {"messages", messages},
@@ -98,10 +98,11 @@ int main(int argc, char* argv[]) {
         // You can use print statements as follows for debugging, they'll be visible when running tests.
         std::cerr << "Logs from your program will appear here!" << std::endl;
 
+        json assistant_message = result["choices"][0]["message"];
+        messages.push_back(assistant_message);
+
         json tool_calls = result["choices"][0]["message"]["tool_calls"];
         if (!tool_calls.empty() && !tool_calls.is_null()) {
-            json assistant_message = result["choices"][0]["message"];
-            messages.push_back(assistant_message);
             for (const auto& tc : tool_calls) {
                 json args = json::parse(tc["function"]["arguments"].get<std::string>());
                 if (tc["function"]["name"].get<std::string>() == "Read") {
@@ -113,10 +114,11 @@ int main(int argc, char* argv[]) {
                         {"tool_call_id", tc["id"]},
                         {"content", content}
                     });
+                } else {
+                    std::cout << result["choices"][0]["message"]["content"].get<std::string>();
+                    break;
                 }
             }
-        } else {
-            std::cout << result["choices"][0]["message"]["content"].get<std::string>();
         }
     }
     return 0;
