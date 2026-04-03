@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
                     {"required", json::array({"file_path"})}
                 }}
             }}
-        }},
+        },
         {
             {"type", "function"},
             {"function",{
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
                     }}
                 }}
             }}
-        }
+        }}
     );
 
     json messages = json::array({
