@@ -98,13 +98,13 @@ int main(int argc, char* argv[]) {
     std::cerr << "Logs from your program will appear here!" << std::endl;
 
     json tool_calls = result["choices"][0]["message"]["tool_calls"];
-    if (!tool_calls.empty() && !tool_calls.isnull()) {
+    if (!tool_calls.empty() && !tool_calls.is_null()) {
         for (const auto& tc : tool_calls) {
-            json args = tc["function"]["arguments"];
-            if (tc["function"]["name"] == "Read") {
+            json args = json::parse(tc["function"]["arguments"].get<std::string>());
+            if (tc["function"]["name"].get<std::string>() == "Read") {
                 std::string file_path = args["file_path"].get<std::string>();
                 std::string content = read_file(file_path);
-                std::cout << content << std::endl;
+                std::cout << content;
             }
         }
     } else {
