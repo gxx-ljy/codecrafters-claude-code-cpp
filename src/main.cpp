@@ -28,6 +28,19 @@ std::string write_file(const std::string& file_path, const std::string& content)
     return "File written successfully";
 }
 
+std::string execute_command(const std::string& command) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("Failed to execute command");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    return result;
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 3 || std::string(argv[1]) != "-p") {
         std::cerr << "Expected first argument to be '-p'" << std::endl;
@@ -90,8 +103,25 @@ int main(int argc, char* argv[]) {
                     }}
                 }}
             }}
-        }}
-    );
+        },
+        {
+            {"type", "function"},
+            {"function", {
+                {"name", "Bash"},
+                {"description": "Execute a shell command"},
+                {"parameters", {
+                {"type", "object"},
+                {"required", json::array({"command"})},
+                {"properties", {
+                    {"command", {
+                    {"type", "string"},
+                    {"description", "The command to execute"}
+                    }}
+                }}
+                }}
+            }}
+            }
+    });
 
     json messages = json::array({
         {{"role", "user"}, {"content", prompt}},
@@ -153,6 +183,15 @@ int main(int argc, char* argv[]) {
                 std::string file_path = args["file_path"].get<std::string>();
                 std::string content = args["content"].get<std::string>();
                 std::string result = write_file(file_path, content);
+                messages.push_back({
+                    {"role", "tool"},
+                    {"tool_call_id", tc["id"]},
+                    {"content", result}
+                });
+            }
+            else if (tc["function"]["name"].get<std::string>() == "Bash") {
+                std::string command = args["command"].get<std::string>();
+                std::string result = execute_bash(command);
                 messages.push_back({
                     {"role", "tool"},
                     {"tool_call_id", tc["id"]},
