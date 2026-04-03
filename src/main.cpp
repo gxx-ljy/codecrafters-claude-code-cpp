@@ -102,22 +102,25 @@ int main(int argc, char* argv[]) {
         messages.push_back(assistant_message);
 
         json tool_calls = result["choices"][0]["message"]["tool_calls"];
-        if (!tool_calls.empty() && !tool_calls.is_null()) {
-            for (const auto& tc : tool_calls) {
-                json args = json::parse(tc["function"]["arguments"].get<std::string>());
-                if (tc["function"]["name"].get<std::string>() == "Read") {
-                    std::string file_path = args["file_path"].get<std::string>();
-                    std::string content = read_file(file_path);
-                    // std::cout << content;
-                    messages.push_back({
-                        {"role", "tool"},
-                        {"tool_call_id", tc["id"]},
-                        {"content", content}
-                    });
-                } else {
-                    std::cout << result["choices"][0]["message"]["content"].get<std::string>();
-                    break;
-                }
+        if (!result["choices"][0]["message"].contains("tool_calls") ||result["choices"][0]["message"]["tool_calls"].empty()) {
+            std::cout << result["choices"][0]["message"]["content"].get<std::string>();
+            break;
+        }
+
+        for (const auto& tc : tool_calls) {
+            json args = json::parse(tc["function"]["arguments"].get<std::string>());
+            if (tc["function"]["name"].get<std::string>() == "Read") {
+                std::string file_path = args["file_path"].get<std::string>();
+                std::string content = read_file(file_path);
+                // std::cout << content;
+                messages.push_back({
+                    {"role", "tool"},
+                    {"tool_call_id", tc["id"]},
+                    {"content", content}
+                });
+            } else {
+                std::cout << result["choices"][0]["message"]["content"].get<std::string>();
+                break;
             }
         }
     }
