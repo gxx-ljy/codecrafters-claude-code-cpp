@@ -19,6 +19,15 @@ std::string read_file(const std::string& file_path) {
                         std::istreambuf_iterator<char>());
 }
 
+std::string write_file(const std::string& file_path, const std::string& content) {
+    std::ofstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + file_path);
+    }
+    file << content;
+    return "File written successfully";
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 3 || std::string(argv[1]) != "-p") {
         std::cerr << "Expected first argument to be '-p'" << std::endl;
@@ -60,6 +69,27 @@ int main(int argc, char* argv[]) {
                     {"required", json::array({"file_path"})}
                 }}
             }}
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "Write",
+                "description": "Write content to a file",
+                "parameters": {
+                "type": "object",
+                "required": ["file_path", "content"],
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "The path of the file to write to"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The content to write to the file"
+                    }
+                }
+                }
+            }
         },
     });
 
@@ -118,7 +148,18 @@ int main(int argc, char* argv[]) {
                     {"tool_call_id", tc["id"]},
                     {"content", content}
                 });
-            } else {
+            } 
+            else if (tc["function"]["name"].get<std::string>() == "Write") {
+                std::string file_path = args["file_path"].get<std::string>();
+                std::string content = args["content"].get<std::string>();
+                std::string result = write_file(file_path, content);
+                messages.push_back({
+                    {"role", "tool"},
+                    {"tool_call_id", tc["id"]},
+                    {"content", result}
+                });
+            }
+            else {
                 std::cout << result["choices"][0]["message"]["content"].get<std::string>();
                 break;
             }
